@@ -594,6 +594,7 @@ function App() {
             <select value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))}>
               <option value={1}>1x</option>
               <option value={10}>10x</option>
+              <option value={25}>25x</option>
               <option value={50}>50x</option>
               <option value={100}>100x</option>
               <option value={500}>500x</option>

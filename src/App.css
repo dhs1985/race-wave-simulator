@@ -92,7 +92,7 @@ html, body {
 }
 
 /* Desktop Layout Constraint */
-@media (min-width: 2100px) {
+@media (min-width: 3500px) {
   .layout-container {
     flex-direction: row; 
     align-items: flex-start;
