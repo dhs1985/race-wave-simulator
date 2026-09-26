@@ -113,6 +113,28 @@ const processGpxTrack = (gpxObj) => {
   return { points: sampled, cum, total, bbox };
 };
 
+
+const formatTimeOfDay = (totalSeconds) => {
+  if (isNaN(totalSeconds) || totalSeconds < 0) return "00:00:00 AM";
+  
+  // Keep it within a 24-hour window
+  const secInDay = 86400;
+  const normalizedSec = totalSeconds % secInDay;
+  
+  const hrs24 = Math.floor(normalizedSec / 3600);
+  const mins = Math.floor((normalizedSec % 3600) / 60);
+  const secs = Math.floor(normalizedSec % 60);
+  
+  const ampm = hrs24 >= 12 ? 'PM' : 'AM';
+  let hrs12 = hrs24 % 12;
+  hrs12 = hrs12 ? hrs12 : 12; // convert 0 to 12 for 12-hour format
+  
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(hrs12)}:${pad(mins)}:${pad(secs)} ${ampm}`;
+};
+
+
+
 const getGlobalBbox = (events) => {
   const tracks = events.map(e => e.track).filter(Boolean);
   if (!tracks.length) return { minLat: -38.5, maxLat: -38.4, minLon: 144.9, maxLon: 145.0 }; // fallback
@@ -416,6 +438,14 @@ function App() {
       const time = simTimeRef.current;
       const globalBbox = getGlobalBbox(events);
 
+      // Format the raw seconds into a readable clock string
+      const timeString = formatTimeOfDay(time);
+
+      // Draw the clock on your canvas (adjust x, y, and styling to match your canvas setup)
+      ctx.fillStyle = '#00ffff';
+      ctx.font = '16px "Press Start 2P", monospace';
+      ctx.fillText(`TIME: ${timeString}`, 20, 40);
+
       events.forEach(ev => {
         if (!ev.track || !ev.runners.length) return;
         const waveStart = parseStartTimeOfDay(ev.startTime) || 0;
@@ -439,13 +469,7 @@ function App() {
         });
       });
 
-      // Time stamp drawing
-      ctx.fillStyle = '#0ff';
-      ctx.font = '32px "Press Start 2P", monospace';
-      const relTime = time - simRange[0];
-      const mm = Math.floor(relTime / 60) % 60;
-      const hh = Math.floor(relTime / 3600);
-      ctx.fillText(`${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`, 10, 40);
+    
     };
 
     rafRef.current = requestAnimationFrame(draw);
@@ -462,40 +486,7 @@ function App() {
 
       <div className="retro-panel" style={{ maxWidth: 1700 }}>
         
-        {/* Main Simulation Controls */}
-        <div className="controls-row" style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
-          <button onClick={() => setPlaying(!playing)} className="play-left-search" style={{ padding: '6px 12px' }}>
-            {playing ? 'Pause' : 'Play'}
-          </button>
-          
-          <div className="control-pair">
-            <label style={{ color: '#fff' }}>Speed</label>
-            <select value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))}>
-              <option value={1}>1x</option>
-              <option value={10}>10x</option>
-              <option value={50}>50x</option>
-              <option value={100}>100x</option>
-              <option value={500}>500x</option>
-              <option value={1000}>1000x</option>
-            </select>
-          </div>
-        </div>
 
-        <div style={{ marginTop: 12 }}>
-          <input
-            type="range"
-            min={simRange[0]}
-            max={simRange[1]}
-            step={1}
-            value={simTime}
-            onChange={(e) => {
-              const t = Number(e.target.value);
-              setSimTime(t);
-              simTimeRef.current = t;
-            }}
-            style={{ width: '100%' }}
-          />
-        </div>
 
         {/* Dynamic Events Configuration */}
         <div style={{ marginTop: 24, display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
@@ -556,7 +547,40 @@ function App() {
         <button onClick={addEvent} style={{ marginTop: 16, padding: '8px 16px', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, cursor: 'pointer' }}>
           + Add Event Wave
         </button>
+        {/* Main Simulation Controls */}
+        <div className="controls-row" style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+          <button onClick={() => setPlaying(!playing)} className="play-left-search" style={{ padding: '6px 12px' }}>
+            {playing ? 'Pause' : 'Play'}
+          </button>
+          
+          <div className="control-pair">
+            <label style={{ color: '#fff' }}>Speed</label>
+            <select value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))}>
+              <option value={1}>1x</option>
+              <option value={10}>10x</option>
+              <option value={50}>50x</option>
+              <option value={100}>100x</option>
+              <option value={500}>500x</option>
+              <option value={1000}>1000x</option>
+            </select>
+          </div>
+        </div>
 
+        <div style={{ marginTop: 12 }}>
+          <input
+            type="range"
+            min={simRange[0]}
+            max={simRange[1]}
+            step={1}
+            value={simTime}
+            onChange={(e) => {
+              const t = Number(e.target.value);
+              setSimTime(t);
+              simTimeRef.current = t;
+            }}
+            style={{ width: '100%' }}
+          />
+        </div>
       </div>
 
       <div className="retro-canvas-placeholder" style={{ maxWidth: 1700, marginTop: 20 }}>
