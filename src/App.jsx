@@ -149,11 +149,11 @@ const getGlobalBbox = (events) => {
 function App() {
   // Dynamic Events Model with 4 Pre-populated Events
   const [events, setEvents] = useState([
-    { id: 'ev-1', name: 'Event 1', startTime: '06:00', trackColor: '#555555', runnerColor: '#ff4444', track: null, runners: [] },
-    { id: 'ev-2', name: 'Event 2', startTime: '07:00', trackColor: '#446644', runnerColor: '#44ff88', track: null, runners: [] },
-    { id: 'ev-3', name: 'Event 3', startTime: '08:00', trackColor: '#445588', runnerColor: '#4488ff', track: null, runners: [] },
-    { id: 'ev-4', name: 'Event 4', startTime: '09:00', trackColor: '#886644', runnerColor: '#ffaa44', track: null, runners: [] }
-  ]);
+      { id: 'ev-1', name: 'Event 1', startTime: '06:00', trackColor: '#555555', runnerColor: '#ff4444', dotRadius: 3, dotOpacity: 0.8, track: null, runners: [] },
+      { id: 'ev-2', name: 'Event 2', startTime: '07:00', trackColor: '#446644', runnerColor: '#44ff88', dotRadius: 3, dotOpacity: 0.8, track: null, runners: [] },
+      { id: 'ev-3', name: 'Event 3', startTime: '08:00', trackColor: '#445588', runnerColor: '#4488ff', dotRadius: 3, dotOpacity: 0.8, track: null, runners: [] },
+      { id: 'ev-4', name: 'Event 4', startTime: '09:00', trackColor: '#886644', runnerColor: '#ffaa44', dotRadius: 3, dotOpacity: 0.8, track: null, runners: [] }
+    ]);
 
   const [simTime, setSimTime] = useState(0);
   const [simRange, setSimRange] = useState([0, 1]);
@@ -199,17 +199,19 @@ function App() {
   };
 
   const addEvent = () => {
-    const id = `ev-${Date.now()}`;
-    setEvents(prev => [...prev, { 
-      id, 
-      name: `Event ${prev.length + 1}`, 
-      startTime: '07:00', 
-      trackColor: '#666666', 
-      runnerColor: '#ffffff', 
-      track: null, 
-      runners: [] 
-    }]);
-  };
+      const id = `ev-${Date.now()}`;
+      setEvents(prev => [...prev, { 
+        id, 
+        name: `Event ${prev.length + 1}`, 
+        startTime: '07:00', 
+        trackColor: '#666666', 
+        runnerColor: '#ffffff',
+        dotRadius: 3,       // <-- Add this
+        dotOpacity: 0.8,    // <-- Add this
+        track: null, 
+        runners: [] 
+      }]);
+    };
 
   const removeEvent = (id) => {
     setEvents(prev => prev.filter(ev => ev.id !== id));
@@ -218,13 +220,21 @@ function App() {
   const handleGpxUpload = (eventId, e) => {
     const file = e.target.files[0];
     if (!file) return;
+    
+    // Grab the file name and remove the ".gpx" extension
+    const fileName = file.name.replace(/\.gpx$/i, '');
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const gpx = new GPXParser();
         gpx.parse(event.target.result);
         const processed = processGpxTrack(gpx);
-        if (processed) updateEvent(eventId, { track: processed });
+        
+        // Update BOTH the track and the name!
+        if (processed) {
+          updateEvent(eventId, { track: processed, name: fileName });
+        }
       } catch (err) {
         console.error("GPX Parse error", err);
       }
@@ -449,6 +459,12 @@ function App() {
       events.forEach(ev => {
         if (!ev.track || !ev.runners.length) return;
         const waveStart = parseStartTimeOfDay(ev.startTime) || 0;
+        
+        // Grab custom radius and apply wave opacity
+        const radius = ev.dotRadius || 3;
+        ctx.save();
+        ctx.globalAlpha = ev.dotOpacity !== undefined ? ev.dotOpacity : 0.8;
+        ctx.fillStyle = ev.runnerColor;
 
         ev.runners.forEach(r => {
           const rStart = waveStart; 
@@ -463,10 +479,11 @@ function App() {
           const [x, y] = latLonToXY(pt.lat, pt.lon, w, h, globalBbox);
 
           ctx.beginPath();
-          ctx.fillStyle = ev.runnerColor; // Using distinct runner color
-          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
           ctx.fill();
         });
+        
+        ctx.restore(); // reset opacity for the next wave
       });
 
     
@@ -524,6 +541,25 @@ function App() {
                 <label style={{ display: 'flex', justifyContent: 'space-between' }}>
                   Runner Colour:
                   <input type="color" value={ev.runnerColor} onChange={(e) => updateEvent(ev.id, { runnerColor: e.target.value })} />
+                </label>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  Dot Size:
+                  <input
+                    type="range" min="1" max="10" step="1"
+                    value={ev.dotRadius || 3}
+                    onChange={(e) => updateEvent(ev.id, { dotRadius: Number(e.target.value) })}
+                    style={{ width: 100 }}
+                  />
+                </label>
+
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  Opacity:
+                  <input
+                    type="range" min="0.05" max="1.0" step="0.05"
+                    value={ev.dotOpacity !== undefined ? ev.dotOpacity : 0.8}
+                    onChange={(e) => updateEvent(ev.id, { dotOpacity: parseFloat(e.target.value) })}
+                    style={{ width: 100 }}
+                  />
                 </label>
 
                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
