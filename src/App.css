@@ -1,35 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 html, body {
-  height: 100%;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
-  background: #222; /* make the page background match the app so there are no white borders */
-  overflow-x: hidden; /* prevent white edges when viewport is narrower */
-  overflow-anchor: none; /* prevent automatic scroll adjustments */
+  background: #222; 
+  overflow-x: hidden; 
+  overflow-y: auto; 
+  overflow-anchor: none; 
   scroll-padding-top: calc(env(safe-area-inset-top));
 }
+
 #root {
   width: 100%;
-  max-width: 2000px;
-  min-height: 100vh; /* constrain to screen height */
-  overflow: auto; /* allow scrolling within root if content larger */
+  max-width: none; /* REMOVED 2000px width cap */
+  min-height: 100vh; 
   margin: 0 auto;
-  padding: 0; /* move padding into .retro-bg so edges fill */
+  padding: 0; 
   text-align: center;
   box-sizing: border-box;
 }
+
 .retro-bg {
   background: #222;
   color: #00ffff;
   font-family: 'Press Start 2P', monospace;
-  padding: 2rem 1rem;
-  padding-top: calc(2rem + env(safe-area-inset-top));
+  /* Change the first value to 0 */
+  padding: 0 20px 4rem 20px; 
+  /* Remove the 0.5rem from the calc */
+  padding-top: env(safe-area-inset-top);
   box-sizing: border-box;
   width: 100%;
+  min-height: 100vh;
 }
-
-
 
 .retro-title {
   position: sticky;
@@ -38,45 +41,30 @@ html, body {
   background: #222;
   color: #ff00ff;
   font-size: 2.2rem;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 0.5rem 0;
   padding: 1rem 0 0.5rem 0;
   text-shadow: 2px 2px 0 #000, 0 0 8px #0ff;
 }
-/* ensure first control row gets some top margin so not hidden */
-.controls-row { margin-top: 1.2rem; }
-/* also pad the main panel so content starts below sticky title */
-.retro-panel { padding-top: 1rem; }
+
+/* PC Side-by-Side vs Mobile Stack Layout */
+.layout-container {
+  display: flex;
+  flex-direction: column; 
+  align-items: center; /* Centers both panel and canvas gracefully on mobile */
+  gap: 20px;
+  width: 100%;
+  max-width: none; /* REMOVED width cap */
+}
 
 .retro-panel {
   background: #111;
   border: 3px solid #00ffff;
   border-radius: 8px;
-  padding: 1.2rem 1rem;
-  margin-bottom: 1.25rem;
-  display: block; /* allows the panel to size responsively */
-  width: min(100%, 1280px); /* allow larger layouts */
+  padding: 0.5rem 1rem;
+  width: 100%; 
+  max-width: 1000px; /* Reasonable max for mobile/tablet */
   box-sizing: border-box;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.retro-label {
-  display: block;
-  margin: 1rem 0;
-  color: #fff;
-  font-size: 1rem;
-}
-
-.retro-error {
-  color: #ff5555;
-  margin: 0.5rem 0;
-  font-size: 1rem;
-}
-
-.retro-status {
-  color: #0ff;
-  margin-top: 0.5rem;
-  font-size: 1rem;
+  margin: 0; /* Let flex handle alignment */
 }
 
 .retro-canvas-placeholder {
@@ -88,87 +76,70 @@ html, body {
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  margin: 1.25rem auto 0 auto;
-  max-width: 100%;
-  width: min(100%, 1600px);
+  width: 100%;
+  max-width: 2000px; /* Mobile/tablet cap */
   border-radius: 8px;
   box-shadow: 0 0 16px #0ff4;
   box-sizing: border-box;
+  margin: 0; /* Removed auto margins */
 }
+
 .retro-canvas-placeholder canvas {
-  width: 100% !important; /* responsive canvas width */
-  height: min(70vh, 900px) !important; /* scale up on large viewports */
+  width: 100% !important; 
+  height: min(75vh, 1200px) !important; /* Allow canvas to get taller on huge monitors */
   display: block;
-  max-width: 1800px;
-  touch-action: none; /* enable custom pinch/drag handling */
+  touch-action: none; 
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Desktop Layout Constraint */
+@media (min-width: 2100px) {
+  .layout-container {
+    flex-direction: row; 
+    align-items: flex-start;
+    justify-content: space-between; /* Spreads components evenly */
+    gap: 40px; /* Keeps a nice clean gap between panel and map */
   }
-  to {
-    transform: rotate(360deg);
+  
+  .retro-panel {
+    flex: 0 0 1480px; /* Hard lock panel width so controls don't stretch */
+    max-width: 1480px;
+    position: sticky; 
+    top: 100px; 
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  
+  .retro-canvas-placeholder {
+    flex: 1; /* Map takes up ALL remaining horizontal width */
+    max-width: none; /* Uncap the map width entirely */
   }
 }
 
-.card {
-  padding: 2em;
-}
+.retro-label { display: block; margin: 1rem 0; color: #fff; font-size: 1rem; }
+.retro-error { color: #ff5555; margin: 0.5rem 0; font-size: 1rem; }
+.retro-status { color: #0ff; margin-top: 0.5rem; font-size: 1rem; }
 
-.read-the-docs {
-  color: #888;
-}
-
-/* Responsive controls row used by the main panel */
 .controls-row {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
+  /* Change this from 1.2rem to 0 */
+  margin-top: 0; 
 }
-.controls-row > * {
-  margin-bottom: 8px;
-}
+
+.controls-row > * { margin-bottom: 8px; }
+
 .control-pair {
   display: flex;
   gap: 8px;
   align-items: center;
-  white-space: nowrap; /* keep label and control on the same line */
+  white-space: nowrap; 
   flex: 0 1 auto;
   min-width: 140px;
 }
-.control-pair label {
-  color: #fff;
-  min-width: 60px;
-  font-size: 0.85rem;
-}
-.control-pair select,
-.control-pair input {
-  flex: 1 1 auto;
-  min-width: 80px;
-  max-width: 240px;
-}
+
+.control-pair label { color: #fff; min-width: 60px; font-size: 0.85rem; }
+.control-pair select, .control-pair input { flex: 1 1 auto; min-width: 80px; max-width: 1240px; }
 
 .runner-tag {
   background: rgb(106, 235, 235);
@@ -180,27 +151,20 @@ html, body {
   gap: 6px;
   font-size: 11px;
   line-height: 1;
-  height: 20px; /* compact vertical size */
+  height: 20px; 
   box-sizing: border-box;
 }
-.runner-tag button {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-  font-size: 11px;
-}
-.controls-row select,
-.controls-row input,
-.controls-row button {
+
+.runner-tag button { border: none; background: transparent; cursor: pointer; padding: 0 4px; line-height: 1; font-size: 11px; }
+
+.controls-row select, .controls-row input, .controls-row button {
   min-width: 110px;
   max-width: 34vw;
   box-sizing: border-box;
 }
+
 @media (max-width: 520px) {
-  .controls-row select,
-  .controls-row input {
+  .controls-row select, .controls-row input {
     min-width: 140px;
     max-width: 90vw;
   }
@@ -211,3 +175,14 @@ html, body {
   .retro-title { font-size: 1.4rem; }
   .retro-canvas-placeholder canvas { height: 42vh !important; max-height: 480px; }
 }
+
+
+
+/* Boilerplate Logo Code */
+.logo { height: 6em; padding: 1.5em; will-change: filter; transition: filter 300ms; }
+.logo:hover { filter: drop-shadow(0 0 2em #646cffaa); }
+.logo.react:hover { filter: drop-shadow(0 0 2em #61dafbaa); }
+@keyframes logo-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: no-preference) { a:nth-of-type(2) .logo { animation: logo-spin infinite 20s linear; } }
+.card { padding: 2em; }
+.read-the-docs { color: #888; }
